@@ -13,6 +13,8 @@ class DETR(nn.Module):
     def __init__(self, cfg):
         super().__init__()
 
+        self.mask_on = cfg.MODEL.MASK_ON
+
         self.backbone = build_backbone(cfg)
         self.position_embedding = build_position_encoding(cfg)
 
@@ -42,6 +44,17 @@ class DETR(nn.Module):
                 mapping from a named loss to a tensor storing the loss. Used during training only.
         """
         images = self.preprocess_image(batched_inputs)
+
+        features = self.backbone(images.tensor)
+
+        masks = {
+            name: None # TODO: mask on
+            for name, x in features.items()
+        }
+
+        pos = {}
+        for name, x in features.items():
+            pos[name] = self.position_embedding(x, masks[name]).to(x)
 
     def preprocess_image(self, batched_inputs):
         """
